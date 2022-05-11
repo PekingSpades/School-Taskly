@@ -1,4 +1,4 @@
-package com.erha.calander.data.model
+package com.erha.calander.model
 
 class SimpleNEUClass {
     var day //星期几？

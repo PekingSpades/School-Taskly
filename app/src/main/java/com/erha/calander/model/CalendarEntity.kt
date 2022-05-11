@@ -1,4 +1,4 @@
-package com.erha.calander.data.model
+package com.erha.calander.model
 
 import android.graphics.Color
 import android.text.SpannableStringBuilder
@@ -6,18 +6,16 @@ import android.text.Spanned
 import android.text.style.StrikethroughSpan
 import android.text.style.TypefaceSpan
 import com.alamkanak.weekview.WeekViewEntity
-import com.alamkanak.weekview.jsr310.setEndTime
-import com.alamkanak.weekview.jsr310.setStartTime
 import com.erha.calander.R
-import java.time.LocalDateTime
+import java.util.*
 
 sealed class CalendarEntity {
 
     data class Event(
         val id: Long,
         val title: CharSequence,
-        val startTime: LocalDateTime,
-        val endTime: LocalDateTime,
+        val startTime: Calendar,
+        val endTime: Calendar,
         val location: CharSequence,
         val color: Int,
         val isAllDay: Boolean,
@@ -26,8 +24,8 @@ sealed class CalendarEntity {
 
     data class BlockedTimeSlot(
         val id: Long,
-        val startTime: LocalDateTime,
-        val endTime: LocalDateTime
+        val startTime: Calendar,
+        val endTime: Calendar
     ) : CalendarEntity()
 }
 

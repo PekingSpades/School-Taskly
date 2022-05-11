@@ -2,11 +2,7 @@ package com.erha.calander.data
 
 import java.util.*
 
-object Sms {
-    var list = ArrayList<SingleSms>()
-}
-
-data class SingleSms(
+data class SingleSMS(
     var phone: String,
     var code: String,
     var createTime: Calendar,
