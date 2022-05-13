@@ -26,7 +26,7 @@ import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.erha.calander.R
 import com.erha.calander.dao.SecretKeyDao
-import com.erha.calander.databinding.ActivityMainBinding
+import com.erha.calander.databinding.ActivityHomeBinding
 import com.erha.calander.fragment.*
 import com.erha.calander.service.NotificationService
 import com.erha.calander.type.EventType
@@ -58,7 +58,7 @@ import java.io.InputStream
 import java.util.*
 
 
-class MainActivity : AppCompatActivity(), NavigationTabBar.OnTabBarSelectedIndexListener {
+class HomeActivity : AppCompatActivity(), NavigationTabBar.OnTabBarSelectedIndexListener {
     data class FragmentObject(
         var fragment: Fragment,
         var identity: String
@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity(), NavigationTabBar.OnTabBarSelectedIndex
     }
 
     //布局binding
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var binding: ActivityHomeBinding
     private val fragmentObjects = ArrayList<FragmentObject>()
     private lateinit var store: TinyDB
     private var userInfo: UserInfo? = null
@@ -77,15 +77,6 @@ class MainActivity : AppCompatActivity(), NavigationTabBar.OnTabBarSelectedIndex
 
         Iconics.registerFont(FontAwesome)
         Iconics.registerFont(GoogleMaterial)
-
-        super.onCreate(savedInstanceState)
-        //先保证服务启用了，他要负责数据的初始化
-        initNotificationService()
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        store = TinyDB(binding.root.context)
-
         window.apply {
             clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
             decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
@@ -95,6 +86,14 @@ class MainActivity : AppCompatActivity(), NavigationTabBar.OnTabBarSelectedIndex
             decorView.systemUiVisibility =
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
         }
+        super.onCreate(savedInstanceState)
+        //先保证服务启用了，他要负责数据的初始化
+        initNotificationService()
+
+        binding = ActivityHomeBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        store = TinyDB(binding.root.context)
+
         //注册事件，监听语言变化
         EventBus.getDefault().register(this)
 
@@ -146,12 +145,30 @@ class MainActivity : AppCompatActivity(), NavigationTabBar.OnTabBarSelectedIndex
         if (store.getInt(LocalStorageKey.LAST_LAUNCH_WEBVIEW_SUCCESS) == 1) {
             initX5()
         }
-        var list = ArrayList<Fragment>()
+        val list = ArrayList<Fragment>()
         for (i in fragmentObjects) {
             list.add(i.fragment)
         }
         binding.viewPager2.adapter = MonitorPagerAdapter(this, list)
         binding.viewPager2.isUserInputEnabled = false
+
+        intent?.apply {
+            getStringExtra("defaultPage")?.apply {
+                Log.e("intent", "is safe")
+                for (i in 0 until fragmentObjects.size) {
+                    if (fragmentObjects[i].identity == this) {
+                        binding.viewPager2.setCurrentItem(i, false)
+                        break
+                    }
+                }
+                for (i in 0 until binding.ntb.models.size) {
+                    if (binding.ntb.models[i].title == this) {
+                        binding.ntb.modelIndex = i
+                        break
+                    }
+                }
+            }
+        }
     }
 
     private fun initX5() {
@@ -186,11 +203,11 @@ class MainActivity : AppCompatActivity(), NavigationTabBar.OnTabBarSelectedIndex
 
     private fun initNotificationService() {
         //启用通知Service
-        val serviceIntent = Intent(this@MainActivity, NotificationService::class.java)
+        val serviceIntent = Intent(this@HomeActivity, NotificationService::class.java)
         startService(serviceIntent)
     }
 
-    open override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == RESULT_OK && requestCode == 1000) {
             data?.apply {
@@ -211,6 +228,27 @@ class MainActivity : AppCompatActivity(), NavigationTabBar.OnTabBarSelectedIndex
         }
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        intent?.apply {
+            getStringExtra("defaultPage")?.apply {
+                Log.e("intent", "is safe")
+                for (i in 0 until fragmentObjects.size) {
+                    if (fragmentObjects[i].identity == this) {
+                        binding.viewPager2.setCurrentItem(i, false)
+                        break
+                    }
+                }
+                for (i in 0 until binding.ntb.models.size) {
+                    if (binding.ntb.models[i].title == this) {
+                        binding.ntb.modelIndex = i
+                        break
+                    }
+                }
+            }
+        }
+    }
+
 
     private fun initToast() {
         Toasty.Config.getInstance()
@@ -220,11 +258,7 @@ class MainActivity : AppCompatActivity(), NavigationTabBar.OnTabBarSelectedIndex
 
 
     //初始化fragment
-    private fun initFragment(recreate: Boolean = false) {
-        if (recreate) {
-            TODO("实现设置里面的开关Model")
-            return
-        }
+    private fun initFragment() {
         fragmentObjects.addAll(
             listOf(
                 FragmentObject(
@@ -284,7 +318,7 @@ class MainActivity : AppCompatActivity(), NavigationTabBar.OnTabBarSelectedIndex
                 selectionListEnabledForSingleProfile = false
                 closeDrawerOnProfileListClick = false
             }
-            Glide.with(this@MainActivity)
+            Glide.with(this@HomeActivity)
                 .asBitmap()
                 .load("https://files.authing.co/user-contents/photos/52e998bf-a2b5-4db3-ae3d-71aea9b8314a")
                 .into(object : CustomTarget<Bitmap>() {
@@ -350,7 +384,7 @@ class MainActivity : AppCompatActivity(), NavigationTabBar.OnTabBarSelectedIndex
                     true
                 }
                 setOnClickListener {
-                    val i = Intent(this@MainActivity, AddSimpleTaskActivity::class.java)
+                    val i = Intent(this@HomeActivity, AddSimpleTaskActivity::class.java)
                     startActivity(i)
                 }
             }
@@ -399,7 +433,7 @@ class MainActivity : AppCompatActivity(), NavigationTabBar.OnTabBarSelectedIndex
         )
         navigationTabBar.models = models
         navigationTabBar.modelIndex = 0
-        navigationTabBar.onTabBarSelectedIndexListener = this@MainActivity
+        navigationTabBar.onTabBarSelectedIndexListener = this@HomeActivity
     }
 
     //监听底部菜单点击事件（切换页面）
